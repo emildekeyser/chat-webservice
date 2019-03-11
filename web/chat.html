@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+	<title>chat</title>
+</head>
+<body>
+<main>
+	<p><span id="userName"></span> <span id="status"></span></p>
+	<table id="friends"></table>
+	<p>
+	<form>
+		<label for="statusInput">change status</label>
+		<input type="text" id="statusInput" name="statusInput" list="statusList"/>
+		<datalist id="statusList">
+			<option value="online">Pen</option>
+			<option value="offline">Pencil</option>
+			<option value="away">Paper</option>
+		</datalist>
+		<input type="button" id="changeStatusButton" value="Change status"/>
+	</form>
+	</p>
+	<p>
+	<form method="post" action="/logout">
+		<p>
+		<input type="submit" id="logoutbutton" value="Log out">
+		</p>
+	</form>
+	</p>
+	<p id="chatWindow"></p>
+	<p>
+	<form>
+		<input type="text" id="msgInput" name="msgInput"/>
+		<input type="button" id="sendMsgButton" value="Send message"/>
+	</form>
+	</p>
+</main>
+<script type="text/javascript" src="/web/js/chat.js"></script>
+</body>
+</html>
+
