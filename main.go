@@ -71,6 +71,16 @@ func main() {
 		users[email].Status = status
 	}))
 
+	http.HandleFunc("/addfriend", authenticate(func(w http.ResponseWriter, r *http.Request) {
+		name := r.FormValue("newFriend")
+		session, _ := store.Get(r, "auth")
+		email := session.Values["authenticated"].(string)
+		friendEmail := name + "@ucll.be"
+		users[email].Friends = append(users[email].Friends, friendEmail)
+		users[friendEmail].Friends = append(users[friendEmail].Friends, email)
+		fmt.Printf("List: %+v", users[email].Friends)
+	}))
+
 	http.HandleFunc("/friends", authenticate(func(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "auth")
 		email := session.Values["authenticated"].(string)
@@ -156,6 +166,12 @@ func MakeUsers() map[string]*user {
 	users["artyom@ucll.be"] = &user{
 		Name:     "artyom",
 		Email:    "artyom@ucll.be",
+		Password: "o",
+		Status:   "offline",
+		Friends:  []string{"an@ucll.be"}}
+	users["tony@ucll.be"] = &user{
+		Name:     "tony",
+		Email:    "tony@ucll.be",
 		Password: "o",
 		Status:   "offline",
 		Friends:  []string{"an@ucll.be"}}

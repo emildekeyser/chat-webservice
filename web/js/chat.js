@@ -1,13 +1,17 @@
 var statusButton = document.getElementById("changeStatusButton");
 statusButton.onclick = changeStatus;
 
+var addFriendButton = document.getElementById("addFriendButton");
+addFriendButton.onclick = addFriend;
+
 var xhrFriends = new XMLHttpRequest();
 var xhrStatus = new XMLHttpRequest();
+var xhrAddFriend = new XMLHttpRequest();
 
 getFriends();
 
 function changeStatus() {
-	var statusText = getStatusInput();
+	var statusText = document.getElementById("statusInput").value;
 	// encodeURIComponent om UTF-8 te gebruiken en speciale karakters om te zetten naar code
 	var param = "newStatus=" + encodeURIComponent(statusText);
 	xhrStatus.open("POST", "status", true);
@@ -16,8 +20,13 @@ function changeStatus() {
 	document.getElementById("status").textContent = statusText;
 }
 
-function getStatusInput(){
-	return document.getElementById("statusInput").value;
+function addFriend() {
+	var friendName = document.getElementById("addFriendInput").value;
+	// encodeURIComponent om UTF-8 te gebruiken en speciale karakters om te zetten naar code
+	var param = "newFriend=" + encodeURIComponent(friendName);
+	xhrAddFriend.open("POST", "addfriend", true);
+	xhrAddFriend.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+	xhrAddFriend.send(param); 
 }
 
 function getFriends()
