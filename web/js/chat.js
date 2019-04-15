@@ -46,12 +46,26 @@ function updateFriendsWhenReady () {
 		}
 		for(friend in serverResponse){
 			var row = document.createElement("tr");
+
 			var name = document.createElement("td");
-			name.textContent = friend;
+			name.textContent = serverResponse[friend].Name;
 			row.appendChild(name);
+
+			var email = document.createElement("td");
+			email.textContent = serverResponse[friend].Email;
+			row.appendChild(email);
+
 			var stat = document.createElement("td");
-			stat.textContent = serverResponse[friend];
+			stat.textContent = serverResponse[friend].Status;
 			row.appendChild(stat);
+
+			var chatWithTd = document.createElement("td");
+			var chatWithButton = document.createElement("button");
+
+			chatWithTd.appendChild(chatWithButton);
+			row.appendChild(chatWithTd);
+			chatWith.textContent = serverResponse[friend].Status;
+
 			friendTable.appendChild(row);
 		}
 

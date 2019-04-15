@@ -21,7 +21,7 @@ var (
 		WriteBufferSize: 1024,
 	}
 	commentConnections = make(map[*websocket.Conn]bool)
-	commentChannel = make(chan Comment)
+	commentChannel = make(chan comment)
 )
 
 type user struct {
@@ -32,10 +32,16 @@ type user struct {
 	Friends  []string `json:"friends"`
 }
 
-type Comment struct {
+type comment struct {
 	Name string `json:"name"`
 	Rating string `json:"rating"`
 	Text string `json:"text"`
+}
+
+type friend struct {
+	Name string `json:name`
+	Email string `json:email`
+	Status string `json:status`
 }
 
 func main() {
@@ -85,7 +91,7 @@ func main() {
 		session, _ := store.Get(r, "auth")
 		email := session.Values["authenticated"].(string)
 		friendsJson, _ := json.Marshal(MakeFriendlist(email))
-		//fmt.Printf("%s\n", string(friendsJson))
+		// fmt.Printf("%s\n", string(friendsJson))
 		fmt.Fprintf(w, "%s", string(friendsJson))
 	}))
 
@@ -94,7 +100,7 @@ func main() {
 		defer conn.Close()
 		commentConnections[conn] = true
 		for {
-			var msg Comment
+			var msg comment
 			err := conn.ReadJSON(&msg)
 			if err != nil {
 				delete(commentConnections, conn)
@@ -104,7 +110,7 @@ func main() {
 			commentChannel <- msg
 		}
 	})
-	go handleComments()
+	go handlecomments()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		file, _ := ioutil.ReadFile("web/login.html")
@@ -115,7 +121,7 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
-func handleComments() {
+func handlecomments() {
 	for {
 		msg := <-commentChannel
 		for conn := range commentConnections {
@@ -139,12 +145,15 @@ func authenticate(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func MakeFriendlist(email string) map[string]string {
-	friendList := make(map[string]string)
-	for _, friend := range users[email].Friends {
-		name := users[friend].Name
-		status := users[friend].Status
-		friendList[name] = status
+func MakeFriendlist(email string) []*friend {
+	var friendList []*friend
+	for _, friendEmail := range users[email].Friends {
+		f := &friend{
+			Name: users[friendEmail].Name,
+			Email: users[friendEmail].Email,
+			Status: users[friendEmail].Status,
+		}
+		friendList = append(friendList, f)
 	}
 	return friendList
 }
