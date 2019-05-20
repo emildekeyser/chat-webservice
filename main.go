@@ -103,6 +103,18 @@ func main() {
 		fmt.Fprintf(w, "%s", string(friendsJson))
 	}))
 
+	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+		usersSlice := make([]*user, 0, len(users))
+		for _, value := range users {
+			usersSlice = append(usersSlice, value)
+		}
+		usersJson, _ := json.Marshal(usersSlice)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		fmt.Fprintf(w, "%s", string(usersJson))
+	})
+
 	http.HandleFunc("/comment", func(w http.ResponseWriter, r *http.Request) {
 		conn, _ := upgrader.Upgrade(w, r, nil)
 		defer conn.Close()
