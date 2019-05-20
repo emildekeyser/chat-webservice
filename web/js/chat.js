@@ -61,10 +61,10 @@ function updateFriendsWhenReady () {
 
 			var chatWithTd = document.createElement("td");
 			var chatWithButton = document.createElement("button");
+			chatWithButton.textContent = "chat";
 
 			chatWithTd.appendChild(chatWithButton);
 			row.appendChild(chatWithTd);
-			chatWith.textContent = serverResponse[friend].Status;
 
 			friendTable.appendChild(row);
 		}
@@ -74,22 +74,12 @@ function updateFriendsWhenReady () {
 	}
 }
 
-// ws code
-//var input = document.getElementById("msgInput");
-//var output = document.getElementById("chatWindow");
-//var msgButton = document.getElementById("sendMsgButton");
-//msgButton.onclick = send;
-//var socket = new WebSocket("ws://localhost:8080/echo");
-//
-//socket.onopen = function () {
-//	output.innerHTML += "Status: Connected\n";
-//};
-//
-//socket.onmessage = function (e) {
-//	output.innerHTML += "Server: " + e.data + "\n";
-//};
-//
-//function send() {
-//	socket.send(input.value);
-//	input.value = "";
-//}
+ // ws code
+var input = document.getElementById("msgInput");
+var output = document.getElementById("chatWindow");
+var msgButton = document.getElementById("sendMsgButton");
+msgButton.onclick = send;
+
+function send() {
+	// input.value
+}

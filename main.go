@@ -87,11 +87,19 @@ func main() {
 		fmt.Printf("List: %+v", users[email].Friends)
 	}))
 
-	http.HandleFunc("/friends", authenticate(func(w http.ResponseWriter, r *http.Request) {
-		session, _ := store.Get(r, "auth")
-		email := session.Values["authenticated"].(string)
+	http.HandleFunc("/friends/", authenticate(func(w http.ResponseWriter, r *http.Request) {
+		email := r.URL.Path[len("/friends/"):]
+		fmt.Printf("email: %s\n", email)
+		if email == "" {
+			session, err := store.Get(r, "auth")
+			if err == nil {
+				email = session.Values["authenticated"].(string)
+			} else {
+				fmt.Fprintf(w, "%s", "")
+				return
+			}
+		}
 		friendsJson, _ := json.Marshal(MakeFriendlist(email))
-		// fmt.Printf("%s\n", string(friendsJson))
 		fmt.Fprintf(w, "%s", string(friendsJson))
 	}))
 
@@ -135,18 +143,21 @@ func handlecomments() {
 
 func authenticate(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, _ := store.Get(r, "auth")
-		email, ok := session.Values["authenticated"].(string)
-		if !ok || email == "" {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
-		}
+		// session, _ := store.Get(r, "auth")
+		// email, ok := session.Values["authenticated"].(string)
+		// if !ok || email == "" {
+		// 	http.Error(w, "Forbidden", http.StatusForbidden)
+		// 	return
+		// }
 		f(w, r)
 	}
 }
 
 func MakeFriendlist(email string) []*friend {
 	var friendList []*friend
+	if users[email] == nil {
+		return friendList
+	}
 	for _, friendEmail := range users[email].Friends {
 		f := &friend{
 			Name: users[friendEmail].Name,
