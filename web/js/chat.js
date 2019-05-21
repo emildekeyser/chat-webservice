@@ -52,6 +52,7 @@ function updateFriendsWhenReady () {
 			row.appendChild(name);
 
 			var email = document.createElement("td");
+			email.id = "email"
 			email.textContent = serverResponse[friend].Email;
 			row.appendChild(email);
 
@@ -61,9 +62,13 @@ function updateFriendsWhenReady () {
 
 			var chatWithTd = document.createElement("td");
 			var chatWithButton = document.createElement("button");
+			chatWithButton.onclick = chatWithButtonHandler;
 			chatWithButton.textContent = "chat";
-
 			chatWithTd.appendChild(chatWithButton);
+
+			if($msgReceiver == email.textContent){
+				$(row).css("background-color", "green");
+			}
 			row.appendChild(chatWithTd);
 
 			friendTable.appendChild(row);
@@ -74,12 +79,60 @@ function updateFriendsWhenReady () {
 	}
 }
 
- // ws code
-var input = document.getElementById("msgInput");
-var output = document.getElementById("chatWindow");
-var msgButton = document.getElementById("sendMsgButton");
-msgButton.onclick = send;
+$msgReceiver = "";
 
-function send() {
-	// input.value
+$input = $("#msgInput");
+$output = $("#chatWindow");
+$msgButton = $("#sendMsgButton");
+
+$(document).ready(function() {
+	$msgButton.click(sendMsg);
+	receiveMsgs();
+});
+
+function chatWithButtonHandler(event){
+	email = $(this).parent().parent().find("#email").text();
+	$msgReceiver = email;
 }
+
+function sendMsg(){
+	$.post("sendmsg", {msg: $input.val(), msgreceiver: $msgReceiver});
+}
+
+function receiveMsgs(){
+	$.get("messages", {msgreceiver: $msgReceiver}, function(data) {
+		// $output.text(data);
+		msgOutput(data)
+	});
+	setTimeout(receiveMsgs, 1000);
+}
+
+function msgOutput(data) {
+	$output.empty();
+	messages = JSON.parse(data);
+	$(messages).each(function(i, msgObj){
+		from = msgObj.From;
+		msg = msgObj.Msg;
+		$("<p>").html("<span>" + from + ": </span>" + msg).appendTo($output);
+	});
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

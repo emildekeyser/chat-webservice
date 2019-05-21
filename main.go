@@ -22,6 +22,7 @@ var (
 	}
 	commentConnections = make(map[*websocket.Conn]bool)
 	commentChannel = make(chan comment)
+	messages = make([]*message, 0, 100)
 )
 
 type user struct {
@@ -44,6 +45,12 @@ type friend struct {
 	Status string `json:status`
 }
 
+type message struct {
+	From string `json:from`
+	To string `json:to`
+	Msg string `json:msg`
+}
+
 func main() {
 	fmt.Printf("server up\n")
 
@@ -63,6 +70,27 @@ func main() {
 		}
 	})
 
+	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		email := r.FormValue("email")
+		name := r.FormValue("name")
+		password := r.FormValue("password")
+		_, exists := users[email]
+		valid := !exists && email != "" && password != "" && name != ""
+		if valid {
+			users[email] = &user{
+				Name: name,
+				Email: email,
+				Password: password,
+				Status:   "offline",
+				Friends:  make([]string, 0)}
+			file, _ := ioutil.ReadFile("web/login.html")
+			fmt.Fprintf(w, "%s", file)
+		} else {
+			file, _ := ioutil.ReadFile("web/register.html")
+			fmt.Fprintf(w, "%s", file)
+		}
+	})
+
 	http.HandleFunc("/logout", authenticate(func(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "auth")
 		session.Values["authenticated"] = nil
@@ -78,18 +106,26 @@ func main() {
 	}))
 
 	http.HandleFunc("/addfriend", authenticate(func(w http.ResponseWriter, r *http.Request) {
-		name := r.FormValue("newFriend")
+		friendEmail := r.FormValue("newFriend")
 		session, _ := store.Get(r, "auth")
 		email := session.Values["authenticated"].(string)
-		friendEmail := name + "@ucll.be"
-		users[email].Friends = append(users[email].Friends, friendEmail)
-		users[friendEmail].Friends = append(users[friendEmail].Friends, email)
-		fmt.Printf("List: %+v", users[email].Friends)
+
+		if users[email] == nil || users[friendEmail] == nil {
+			return
+		}
+		if !contains(users[email].Friends, friendEmail) {
+			users[email].Friends = append(users[email].Friends, friendEmail)
+		}
+		if !contains(users[friendEmail].Friends, email) {
+			users[friendEmail].Friends = append(users[friendEmail].Friends, email)
+		}
+		// fmt.Printf("List: %+v", users[email].Friends)
 	}))
 
-	http.HandleFunc("/friends/", authenticate(func(w http.ResponseWriter, r *http.Request) {
-		email := r.URL.Path[len("/friends/"):]
-		fmt.Printf("email: %s\n", email)
+	http.HandleFunc("/friends", authenticate(func(w http.ResponseWriter, r *http.Request) {
+		// email := r.URL.Path[len("/friends/"):]
+		email := ""
+		// fmt.Printf("email: %s\n", email)
 		if email == "" {
 			session, err := store.Get(r, "auth")
 			if err == nil {
@@ -131,6 +167,42 @@ func main() {
 		}
 	})
 	go handlecomments()
+
+	http.HandleFunc("/sendmsg", func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "auth")
+		email, _ := session.Values["authenticated"].(string)
+		to := r.FormValue("msgreceiver")
+		msg := r.FormValue("msg")
+		valid := users[email] != nil && users[to] != nil
+		newMsg := &message{
+			From: email,
+			To: to,
+			Msg: msg }
+		if valid {
+			messages = append(messages, newMsg)
+		}
+		// need to return something
+		fmt.Fprintf(w, "{}")
+	})
+
+	http.HandleFunc("/messages", func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "auth")
+		from, _ := session.Values["authenticated"].(string)
+		to := r.FormValue("msgreceiver")
+		valid := users[from] != nil && users[to] != nil
+		correspondance := make([]*message, 0, 100)
+		if valid {
+			for _, m := range messages{
+				if (m.From == from && m.To == to) ||
+					(m.From == to && m.To == from){
+					correspondance = append(correspondance, m)
+				}
+			}
+		}
+		cj, _ := json.Marshal(correspondance)
+		fmt.Fprintf(w, string(cj))
+
+	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		file, _ := ioutil.ReadFile("web/login.html")
@@ -208,4 +280,13 @@ func MakeUsers() map[string]*user {
 		Status:   "offline",
 		Friends:  []string{"an@ucll.be"}}
 	return users
+}
+
+func contains(slice []string, element string) bool {
+	for _, s := range slice {
+		if s == element {
+			return true
+		}
+	}
+	return false
 }
